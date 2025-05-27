@@ -1,6 +1,6 @@
 
-import { useReadContract } from 'wagmi';
-import abi from "../abi/launchtk.json";
+// import { useReadContract } from 'wagmi';
+// import abi from "../abi/launchtk.json";
 
 // Remove ContractAddress constant as it's not needed here anymore
 

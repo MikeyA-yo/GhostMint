@@ -5,14 +5,15 @@ import { RouterProvider, createRouter } from '@tanstack/react-router'
 // Import the generated route tree
 import { routeTree } from './routeTree.gen';
 import { WagmiProvider, createConfig, http } from 'wagmi';
-import { avalancheFuji } from 'wagmi/chains'; // Example: Fuji testnet
+import { avalancheFuji, avalanche } from 'wagmi/chains'; // Example: Fuji testnet
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 // Wagmi Client Configuration
 const config = createConfig({
-  chains: [avalancheFuji], // Add other chains as needed e.g. mainnet
+  chains: [avalancheFuji, avalanche], // Add other chains as needed e.g. mainnet
   transports: {
     [avalancheFuji.id]: http(), // Default transport for Fuji
+    [avalanche.id]: http(), // Default transport for Mainnet
   },
 });
 

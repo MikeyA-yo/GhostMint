@@ -6,7 +6,7 @@ import abi from "../abi/launchtk.json"
 // const fakeAbi = parseAbi([
 //   'function launchToken(string name, string symbol) public',
 // ]);
-const ContractAddress = '0xAAd78a5cDe5996e43B6F10302eA3CEF432d7b014' as `0x${string}`;
+const ContractAddress = '0x556c78ff8D994Cfc2F774B86a342801FA75ABE0D' as `0x${string}`;
 const registrar = '0x0165878A594ca255338adfa4d48449f69242Eb8F' as `0x${string}`;
 const verifier = '0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9' as `0x${string}`;
 import { Link } from '@tanstack/react-router';
