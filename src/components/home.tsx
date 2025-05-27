@@ -136,11 +136,20 @@ export function Home() {
               {connectors.map((connector) => (
                 <button
                   key={connector.id}
-                  onClick={() => connect({ connector })}
-                  disabled={isConnecting && connector.id === connect.arguments?.[0]?.connector?.id}
+                  onClick={() => connect({ connector }, {
+                    onSuccess: () => {
+                      setToast({ type: 'success', message: 'Wallet connected successfully!' });
+                    },
+                    onError: (error) => {
+                      // You can also set a toast for connection errors if desired
+                      console.error('Failed to connect wallet:', error);
+                      setToast({ type: 'error', message: `Failed to connect: ${error.message}` });
+                    }
+                  })}
+                  disabled={isConnecting}
                   className="px-8 py-3 bg-purple-600 hover:bg-purple-700 rounded-lg font-semibold text-lg transition-colors shadow-lg w-full max-w-xs"
                 >
-                  {isConnecting && connector.id === connect.arguments?.[0]?.connector?.id ? 'Connecting...' : `Connect to ${connector.name}`}
+                  {isConnecting ? 'Connecting...' : `Connect to ${connector.name}`}
                 </button>
               ))}
               {connectError && <p className="text-red-400 text-sm mt-2">Error: { connectError.message}</p>}
