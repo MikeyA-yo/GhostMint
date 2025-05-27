@@ -1,56 +1,34 @@
 
 
-// Mock data for tokens - in a real app, this would come from an API or blockchain query
-const mockTokens = [
-  {
-    id: '1',
-    name: 'Super Privacy Coin',
-    symbol: 'SPC',
-    creator: '0xAlice123...xyz',
-    description: 'A revolutionary coin focused on untraceable transactions and ultimate user privacy.',
-    imageUrl: 'https://via.placeholder.com/100/FFD700/000000?Text=SPC',
-    marketCap: '$1,200,000',
-    volume24h: '$50,000',
-    launchedDate: '2024-07-15',
-  },
-  {
-    id: '2',
-    name: 'Secure DeFi Token',
-    symbol: 'SDT',
-    creator: '0xBob456...abc',
-    description: 'Bringing privacy to decentralized finance. Securely lend, borrow, and trade.',
-    imageUrl: 'https://via.placeholder.com/100/7FFF00/000000?Text=SDT',
-    marketCap: '$850,000',
-    volume24h: '$25,000',
-    launchedDate: '2024-06-20',
-  },
-  {
-    id: '3',
-    name: 'Anonymous NFT Pass',
-    symbol: 'ANP',
-    creator: '0xCarol789...def',
-    description: 'Exclusive access NFTs with privacy-preserving features for holders.',
-    imageUrl: 'https://via.placeholder.com/100/00FFFF/000000?Text=ANP',
-    marketCap: 'N/A (NFT)',
-    volume24h: '$5,000',
-    launchedDate: '2024-08-01',
-  },
-  {
-    id: '4',
-    name: 'StealthPay',
-    symbol: 'STP',
-    creator: '0xDave101...ghi',
-    description: 'A simple and private way to make everyday payments on the blockchain.',
-    imageUrl: 'https://via.placeholder.com/100/FF00FF/FFFFFF?Text=STP',
-    marketCap: '$500,000',
-    volume24h: '$10,000',
-    launchedDate: '2024-05-10',
-  },
-];
-
 import { Link } from '@tanstack/react-router';
+import { useReadContract, useAccount } from 'wagmi';
+import abi from "../abi/launchtk.json";
+import { TokenCard } from './TokenCard'; // Import the new TokenCard component
+
+const ContractAddress = '0xAAd78a5cDe5996e43B6F10302eA3CEF432d7b014' as `0x${string}`; // Updated Contract Address
+
+// Define the type for the token details object based on the ABI
+interface TokenDetails {
+  name: string;
+  symbol: string;
+  decimals: number; // ABI shows uint8, which is a number in TS
+  tokenAddress: `0x${string}`;
+}
 
 export function ExplorePage() {
+  const { isConnected } = useAccount();
+
+  const { data: allTokenDetails, error: tokenDetailsError, isLoading: isLoadingTokenDetails } = useReadContract({
+    abi,
+    address: ContractAddress,
+    functionName: 'getAllTokenDetails', // Changed to fetch all details
+    query: { 
+      enabled: isConnected,
+      staleTime: 60 * 1000, 
+      gcTime: 5 * 60 * 1000, 
+    }
+  });
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 to-slate-800 text-white p-4 sm:p-8 font-sans flex flex-col items-center">
       <nav className="w-full max-w-4xl mx-auto mb-10 p-3 bg-slate-800/50 rounded-lg shadow-lg">
@@ -85,52 +63,33 @@ export function ExplorePage() {
       </header>
 
       <main className="w-full max-w-5xl mx-auto">
-        {mockTokens.length === 0 ? (
+        {!isConnected ? (
           <div className="text-center py-12">
-            <p className="text-2xl text-slate-400">No tokens launched yet. Be the first!</p>
-            {/* Optional: Link to the launch page */}
-            {/* <Link to="/" className="mt-4 inline-block px-6 py-2 bg-purple-600 hover:bg-purple-700 rounded-lg font-semibold transition-colors">
+            <p className="text-2xl text-slate-400">Please connect your wallet to view launched tokens.</p>
+          </div>
+        ) : isLoadingTokenDetails ? ( // Changed variable name
+          <div className="text-center py-12">
+            <p className="text-2xl text-slate-400">Loading token list...</p>
+            <svg className="animate-spin mx-auto mt-4 h-10 w-10 text-sky-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+          </div>
+        ) : tokenDetailsError ? ( // Corrected variable name
+          <div className="text-center py-12">
+            <p className="text-2xl text-red-400">Error loading token list: {tokenDetailsError.message}</p> {/* Corrected variable name */}
+          </div>
+        ) : !allTokenDetails || (allTokenDetails as TokenDetails[]).length === 0 ? ( // Corrected variable name and type assertion
+          <div className="text-center py-12">
+            <p className="text-2xl text-slate-400">No tokens launched yet or found on the contract.</p>
+            <Link to="/" className="mt-4 inline-block px-6 py-2 bg-purple-600 hover:bg-purple-700 rounded-lg font-semibold transition-colors">
               Launch a Token
-            </Link> */}
+            </Link>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
-            {mockTokens.map((token) => (
-              <div
-                key={token.id}
-                className="bg-slate-800/60 rounded-xl shadow-2xl p-6 hover:shadow-purple-500/30 transition-all duration-300 ease-in-out transform hover:-translate-y-1 flex flex-col"
-              >
-                <div className="flex items-center mb-4">
-                  <img src={token.imageUrl} alt={`${token.name} logo`} className="w-16 h-16 rounded-full mr-4 border-2 border-slate-700" />
-                  <div>
-                    <h2 className="text-2xl font-semibold text-sky-300">{token.name} ({token.symbol})</h2>
-                    <p className="text-xs text-slate-400">Launched: {token.launchedDate}</p>
-                  </div>
-                </div>
-                <p className="text-slate-300 leading-relaxed mb-4 text-sm flex-grow">
-                  {token.description}
-                </p>
-                <div className="mt-auto pt-4 border-t border-slate-700/50 space-y-2 text-xs">
-                  <div className="flex justify-between">
-                    <span className="text-slate-400">Market Cap:</span>
-                    <span className="font-medium text-teal-300">{token.marketCap}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-slate-400">24h Volume:</span>
-                    <span className="font-medium text-teal-300">{token.volume24h}</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-slate-400">Creator:</span>
-                    <span className="font-medium text-purple-300 truncate hover:text-clip" title={token.creator}>
-                      {token.creator.substring(0, 10)}...
-                    </span>
-                  </div>
-                </div>
-                {/* Optional: Add a button to view more details or interact with the token */}
-                {/* <button className="mt-5 w-full py-2 bg-sky-600 hover:bg-sky-700 rounded-lg font-semibold transition-colors text-sm">
-                  View Details
-                </button> */}
-              </div>
+            {(allTokenDetails as TokenDetails[]).map((detail) => ( // Corrected mapping and prop
+              <TokenCard key={detail.tokenAddress} tokenDetail={detail} />
             ))}
           </div>
         )}

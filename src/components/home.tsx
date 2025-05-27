@@ -1,50 +1,96 @@
 import React from 'react';
 import { useAccount, useConnect, useDisconnect, useWriteContract } from 'wagmi';
-import { injected } from 'wagmi/connectors'; // Corrected import for wagmi v2
-import { parseAbi } from 'viem';
-
-const fakeAbi = parseAbi([
-  'function launchToken(string name, string symbol) public',
-]);
-const fakeContractAddress = '0x1234567890123456789012345678901234567890' as `0x${string}`;
-
+// import { injected } from 'wagmi/connectors'; // Corrected import for wagmi v2
+// import { parseAbi } from 'viem';
+import abi from "../abi/launchtk.json"
+// const fakeAbi = parseAbi([
+//   'function launchToken(string name, string symbol) public',
+// ]);
+const ContractAddress = '0xAAd78a5cDe5996e43B6F10302eA3CEF432d7b014' as `0x${string}`;
+const registrar = '0x0165878A594ca255338adfa4d48449f69242Eb8F' as `0x${string}`;
+const verifier = '0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9' as `0x${string}`;
 import { Link } from '@tanstack/react-router';
 
 export function Home() {
   const { address, isConnected } = useAccount();
-  const { connect } = useConnect();
+  const { connect, connectors, error: connectError, isPending: isConnecting } = useConnect();
   const { disconnect } = useDisconnect();
-  const { writeContract, isPending: isLaunching } = useWriteContract(); // Added isPending for loading state
+  const { writeContract, isPending: isLaunching } = useWriteContract(); 
   const [tokenName, setTokenName] = React.useState('');
   const [tokenSymbol, setTokenSymbol] = React.useState('');
+  const [tokenDecimals, setTokenDecimals] = React.useState<number | ''>(18);
+  const [toast, setToast] = React.useState<{ type: 'success' | 'error'; message: string } | null>(null);
 
   const handleLaunchToken = async () => {
     if (!isConnected) {
       alert('Please connect your wallet first.');
       return;
     }
-    if (!tokenName.trim() || !tokenSymbol.trim()) {
-      alert('Please enter a token name and symbol.');
+    if (!tokenName.trim() || !tokenSymbol.trim() || tokenDecimals === '') {
+      alert('Please enter token name, symbol, and decimals.');
       return;
     }
+    if (typeof tokenDecimals === 'number' && (tokenDecimals < 0 || tokenDecimals > 18)) {
+      alert('Decimals must be between 0 and 18.');
+      return;
+    }
+
     try {
-      await writeContract({
-        abi: fakeAbi,
-        address: fakeContractAddress,
+      writeContract({
+        abi,
+        address: ContractAddress,
         functionName: 'launchToken',
-        args: [tokenName, tokenSymbol],
+        args: [tokenName, tokenSymbol, Number(tokenDecimals), registrar, verifier], // Added decimals, registrar, and verifier
+      }, {
+        onSuccess: (data) => {
+          console.log('Token launched successfully', data);
+          setToast({ type: 'success', message: 'Token launch transaction sent! Check your wallet.' });
+          setTokenName('');
+          setTokenSymbol('');
+          setTokenDecimals(18);
+        },
+        onError: (error) => {
+          console.error('Error launching token:', error);
+          setToast({ type: 'error', message: `Failed to launch token: ${ error.message}` });
+        }
       });
-      alert('Token launch transaction sent! Check your wallet.');
-      setTokenName('');
-      setTokenSymbol('');
+      // Removed direct alert, toast will handle notifications
     } catch (error) {
-      console.error('Error launching token:', error);
-      alert('Failed to launch token. See console for details.');
+      // This catch block might be redundant if onError in writeContract handles all errors
+      console.error('Unexpected error in handleLaunchToken:', error);
+      setToast({ type: 'error', message: 'An unexpected error occurred. Please try again.' });
     }
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 to-slate-800 text-white p-4 sm:p-8 flex flex-col items-center font-sans">
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 to-slate-800 text-white p-4 sm:p-8 flex flex-col items-center font-sans relative">
+      {/* Toast Notification */}
+      {toast && (
+        <div 
+          className={`fixed top-5 right-5 p-4 rounded-lg shadow-lg text-white z-50 flex items-center justify-between max-w-sm animate-fadeInOut ${toast.type === 'success' ? 'bg-green-600' : 'bg-red-600'}`}
+        >
+          <p>{toast.message}</p>
+          <button 
+            onClick={() => setToast(null)} 
+            className="ml-4 text-xl font-semibold hover:text-slate-200"
+          >
+            &times;
+          </button>
+        </div>
+      )}
+      <style>
+        {`
+          @keyframes fadeInOut {
+            0% { opacity: 0; transform: translateY(-20px); }
+            10% { opacity: 1; transform: translateY(0); }
+            90% { opacity: 1; transform: translateY(0); }
+            100% { opacity: 0; transform: translateY(-20px); }
+          }
+          .animate-fadeInOut {
+            animation: fadeInOut 4s forwards;
+          }
+        `}
+      </style>
       <nav className="w-full max-w-4xl mx-auto mb-10 p-3 bg-slate-800/50 rounded-lg shadow-lg">
         <div className="flex justify-center items-center gap-6 text-lg">
           <Link
@@ -86,12 +132,19 @@ export function Home() {
               </button>
             </div>
           ) : (
-            <button
-              onClick={() => connect({ connector: injected() })}
-              className="px-8 py-3 bg-purple-600 hover:bg-purple-700 rounded-lg font-semibold text-lg transition-colors shadow-lg"
-            >
-              Connect Wallet to Get Started
-            </button>
+            <div className="flex flex-col items-center space-y-3">
+              {connectors.map((connector) => (
+                <button
+                  key={connector.id}
+                  onClick={() => connect({ connector })}
+                  disabled={isConnecting && connector.id === connect.arguments?.[0]?.connector?.id}
+                  className="px-8 py-3 bg-purple-600 hover:bg-purple-700 rounded-lg font-semibold text-lg transition-colors shadow-lg w-full max-w-xs"
+                >
+                  {isConnecting && connector.id === connect.arguments?.[0]?.connector?.id ? 'Connecting...' : `Connect to ${connector.name}`}
+                </button>
+              ))}
+              {connectError && <p className="text-red-400 text-sm mt-2">Error: { connectError.message}</p>}
+            </div>
           )}
         </div>
       </header>
@@ -122,9 +175,22 @@ export function Home() {
                 className="w-full p-3 bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none"
               />
             </div>
+            <div>
+              <label htmlFor="tokenDecimals" className="block text-sm font-medium text-slate-300 mb-1">Token Decimals (0-18, default: 18)</label>
+              <input
+                type="number"
+                id="tokenDecimals"
+                value={tokenDecimals}
+                onChange={(e) => setTokenDecimals(e.target.value === '' ? '' : parseInt(e.target.value, 10))}
+                placeholder="18"
+                min="0"
+                max="18"
+                className="w-full p-3 bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none"
+              />
+            </div>
             <button
               onClick={handleLaunchToken}
-              disabled={isLaunching || !tokenName.trim() || !tokenSymbol.trim()}
+              disabled={isLaunching || !tokenName.trim() || !tokenSymbol.trim() || tokenDecimals === ''}
               className="w-full px-10 py-4 bg-gradient-to-r from-pink-500 to-red-500 hover:from-pink-600 hover:to-red-600 rounded-lg font-bold text-xl transition-all shadow-xl disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center"
             >
               {isLaunching ? (
