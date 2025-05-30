@@ -1,0 +1,5 @@
+node_modules/
+contracts/verifiers/*
+contracts/prod/*
+circom/build/*
+

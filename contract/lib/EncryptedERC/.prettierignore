@@ -1,0 +1,3 @@
+contracts/verifiers/*
+contracts/prod/*
+circom/build/*

@@ -1,0 +1,19 @@
+{
+  "compilerOptions": {
+    "target": "es2020",
+    "module": "commonjs",
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+    "strict": true,
+    "skipLibCheck": true,
+    "resolveJsonModule": true
+  },
+  "include": [
+    "./src/**/*.ts",
+    "./test/**/*.ts",
+    "./scripts/**/*.ts",
+    "./typechain-types"
+  ],
+  "exclude": [],
+  "files": ["./hardhat.config.ts"]
+}
