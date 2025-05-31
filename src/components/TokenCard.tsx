@@ -12,17 +12,12 @@ interface TokenDetails {
 }
 
 interface TokenCardProps {
-  tokenDetail: TokenDetails; // Changed from tokenAddress to tokenDetail
+  tokenDetail: TokenDetails;
 }
 
-// Interface TokenDetailsFromContract is no longer needed as we get the full object
+
 
 export function TokenCard({ tokenDetail }: TokenCardProps) {
-  // Remove the useReadContract hook as details are passed directly
-
-  // isLoading, error, and !tokenDetails checks can be simplified or removed
-  // as we assume tokenDetail is provided and valid if this component renders.
-  // However, for robustness, a check for tokenDetail might still be good.
 
   if (!tokenDetail) {
     return (
@@ -32,7 +27,6 @@ export function TokenCard({ tokenDetail }: TokenCardProps) {
     );
   }
 
-  // Use tokenDetail directly
   const details = tokenDetail;
 
   return (
@@ -49,7 +43,6 @@ export function TokenCard({ tokenDetail }: TokenCardProps) {
       <p className="text-slate-300 leading-relaxed mb-4 text-sm flex-grow">
         Token Address: <span className="font-mono text-purple-300 break-all">{details.tokenAddress}</span>
       </p>
-      {/* Future: Add more details or actions here */}
     </div>
   );
 }

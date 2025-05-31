@@ -141,7 +141,6 @@ export function Home() {
                       setToast({ type: 'success', message: 'Wallet connected successfully!' });
                     },
                     onError: (error) => {
-                      // You can also set a toast for connection errors if desired
                       console.error('Failed to connect wallet:', error);
                       setToast({ type: 'error', message: `Failed to connect: ${error.message}` });
                     }
